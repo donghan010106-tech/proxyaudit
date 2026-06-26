@@ -1,0 +1,231 @@
+<div id="app">
+<style>
+  #app{
+    --ink:#1d2430; --muted:#6b7785; --line:#e4e8ee; --panel:#ffffff;
+    --bg:#eef1f5; --caused:#c8442b; --caused-bg:#fbeae6; --resolved:#2f8f5b;
+    --resolved-bg:#e7f4ec; --info:#2f6db0; --info-bg:#e8f0f9; --low:#8a7320;
+    --low-bg:#f6f0db;
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink); background:var(--bg); padding:18px; border-radius:14px;
+    max-width:1080px; margin:0 auto; line-height:1.5;
+  }
+  #app *{box-sizing:border-box}
+  .mono{font-family:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  .title{font-size:21px;font-weight:700;letter-spacing:-.01em;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin:3px 0 0}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:3px 9px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--resolved);box-shadow:0 0 0 0 rgba(47,143,91,.5);animation:p 1.8s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(47,143,91,.45)}70%{box-shadow:0 0 0 7px rgba(47,143,91,0)}100%{box-shadow:0 0 0 0 rgba(47,143,91,0)}}
+  @media (prefers-reduced-motion: reduce){.dot{animation:none}}
+
+  .fair{display:flex;gap:14px;align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;flex-wrap:wrap}
+  .fair b{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .bar{position:relative;height:12px;border-radius:7px;background:#eef1f5;flex:1;min-width:220px;overflow:hidden}
+  .bar .before{position:absolute;left:0;top:0;height:100%;width:100%;background:var(--caused);opacity:.20}
+  .bar .after{position:absolute;left:0;top:0;height:100%;background:var(--resolved);transition:width 1.1s ease}
+  .chip{font-weight:700;font-size:13px;padding:2px 8px;border-radius:6px;background:var(--resolved-bg);color:var(--resolved)}
+
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+  @media (max-width:780px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .card h3{margin:0 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .row-btn{display:flex;gap:8px;margin:6px 0 12px}
+  button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--ink);
+    background:var(--ink);color:#fff;padding:8px 13px}
+  button.ghost{background:#fff;color:var(--ink)}
+  button:disabled{opacity:.45;cursor:default}
+
+  .feed{display:flex;flex-direction:column;gap:9px;min-height:80px}
+  .entry{border:1px solid var(--line);border-left-width:4px;border-radius:9px;padding:10px 12px;
+    background:#fff;opacity:0;transform:translateY(6px);animation:in .35s forwards}
+  @keyframes in{to{opacity:1;transform:none}}
+  .entry .logline{font-size:11.5px;color:var(--muted)}
+  .entry .verdict{font-weight:700;font-size:14px;margin:3px 0}
+  .entry .msg{font-size:13px}
+  .entry .steps{margin:7px 0 0;padding-left:18px;font-size:12px;color:#3a4452}
+  .entry .steps li{margin:1px 0}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;
+    padding:1px 7px;border-radius:5px;vertical-align:middle;margin-left:6px}
+  .sev-high{border-left-color:var(--caused)} .t-high{background:var(--caused-bg);color:var(--caused)}
+  .sev-medium{border-left-color:var(--info)} .t-medium{background:var(--info-bg);color:var(--info)}
+  .sev-low{border-left-color:var(--low)} .t-low{background:var(--low-bg);color:var(--low)}
+  .action{font-size:11px;color:var(--muted);margin-top:6px}
+  .action b{color:var(--ink)}
+
+  .chatlog{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto;margin-bottom:10px}
+  .bub{padding:8px 11px;border-radius:10px;font-size:13px;max-width:92%}
+  .me{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:3px}
+  .ai{align-self:flex-start;background:#f1f4f8;border:1px solid var(--line);border-bottom-left-radius:3px}
+  .ai .src{display:block;margin-top:5px;font-size:10.5px;color:var(--muted)}
+  .ask{display:flex;gap:7px}
+  .ask input{flex:1;font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:8px}
+  .ask input:focus{outline:2px solid var(--info);border-color:var(--info)}
+  .hint{font-size:11.5px;color:var(--muted);margin:4px 2px 0}
+  .toast{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;padding:11px 14px;
+    border-radius:10px;font-size:13px;max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,.22);
+    opacity:0;transform:translateY(10px);transition:.3s}
+  .toast.show{opacity:1;transform:none}
+  .toast .tt{font-weight:700;display:block;margin-bottom:2px}
+</style>
+
+<div class="head">
+  <div>
+    <h1 class="title">ProxyAudit &mdash; fairness audit &amp; recovery console</h1>
+    <p class="sub">Each hiring decision is localized to a proxy channel, certified as caused or not, and routed to a recovery action.</p>
+  </div>
+  <span class="pill"><span class="dot"></span> live audit feed</span>
+</div>
+
+<div class="fair">
+  <b>Group parity gap</b>
+  <div class="bar" title="before vs after repair">
+    <div class="before"></div><div class="after" id="afterbar" style="width:100%"></div>
+  </div>
+  <span class="mono" style="font-size:13px">before <b>0.199</b></span>
+  <span class="mono" style="font-size:13px">after <b id="afterval">0.199</b></span>
+  <span class="chip" id="redchip">repairing&hellip;</span>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Step 5 &mdash; recovery recommendations (live)</h3>
+    <div class="row-btn">
+      <button id="run">Run audit</button>
+      <button id="reset" class="ghost">Reset</button>
+    </div>
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ask the auditor</h3>
+    <div class="chatlog" id="chatlog">
+      <div class="bub ai">Ask about any decision &mdash; e.g. <em>&ldquo;why was case 9 rejected?&rdquo;</em> or <em>&ldquo;what should we do about case 20?&rdquo;</em><span class="src">grounded in the audit above</span></div>
+    </div>
+    <div class="ask">
+      <input id="q" placeholder="Ask about a case&hellip;" autocomplete="off"/>
+      <button id="send">Send</button>
+    </div>
+    <p class="hint">Phrasing uses a language model when available, with a built-in fallback so the recommendation is always shown.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const CHANNEL = "demographic embedding (photo/name)";
+  // verdicts measured on the real FairCVdb audit (worked examples 9, 94, 0, 20)
+  const CASES = [
+    {id:"9",  group:"disadvantaged", eff:-1.09, error:"proxy_caused_rejection",  sev:"high",
+     action:"REVERSE_AND_REVIEW",
+     steps:["Re-score the application with the channel neutralized.","Route to human review with the certificate attached.","Notify the candidate that the decision is being re-assessed."],
+     msg:"Rejection caused by the "+CHANNEL+": removing only that channel flips the decision and the candidate clears the bar on competencies alone. Re-evaluate, route to human review, and notify the candidate."},
+    {id:"94", group:"disadvantaged", eff:-1.93, error:"proxy_caused_rejection",  sev:"high",
+     action:"REVERSE_AND_REVIEW",
+     steps:["Re-score the application with the channel neutralized.","Route to human review with the certificate attached.","Notify the candidate that the decision is being re-assessed."],
+     msg:"Rejection caused by the "+CHANNEL+": the proxy alone reproduces the rejection and removing it flips the outcome. Re-evaluate and notify the candidate."},
+    {id:"0",  group:"disadvantaged", eff:-2.01, error:"proxy_suppressed_no_flip", sev:"low",
+     action:"LOG_AND_MONITOR",
+     steps:["Record that the channel suppressed the score without changing the outcome.","Add to the monitoring set in case the margin shifts."],
+     msg:"The "+CHANNEL+" lowered this score but did not change the outcome; the rest of the profile already determined it. No reversal required &mdash; log and monitor."},
+    {id:"20", group:"advantaged",   eff:+2.33, error:"proxy_inflated_selection", sev:"medium",
+     action:"RECHECK_SELECTION",
+     steps:["Re-score with the channel neutralized.","Confirm the candidate still clears the bar on competencies alone."],
+     msg:"Selection inflated by the "+CHANNEL+". Re-score with the channel neutralized and confirm the candidate still qualifies before finalizing."}
+  ];
+  const VLABEL = {proxy_caused_rejection:"Rejected &mdash; proxy-caused",
+    proxy_suppressed_no_flip:"Rejected &mdash; not proxy-caused",
+    proxy_inflated_selection:"Selected &mdash; proxy-inflated"};
+
+  const feed=document.getElementById('feed'), runBtn=document.getElementById('run'),
+        resetBtn=document.getElementById('reset'), toast=document.getElementById('toast');
+  let i=0, timer=null;
+
+  function ts(n){const d=new Date(Date.now()+n*1000);return d.toISOString().replace('T',' ').slice(0,19);}
+
+  function showToast(c){
+    toast.innerHTML='<span class="tt">New recommendation &middot; case '+c.id+'</span>'+
+      (c.sev==='high'?'High severity &mdash; reverse &amp; review':c.sev==='medium'?'Recheck selection':'Logged for monitoring');
+    toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2600);
+  }
+
+  function render(c,k){
+    const e=document.createElement('div');
+    e.className='entry sev-'+c.sev;
+    e.innerHTML=
+      '<div class="logline mono">['+ts(k)+'] &nbsp;case '+c.id+' &nbsp;&middot;&nbsp; '+c.group+
+        ' &nbsp;&middot;&nbsp; channel: '+CHANNEL+' &nbsp;&middot;&nbsp; score effect '+(c.eff>0?'+':'')+c.eff.toFixed(2)+'</div>'+
+      '<div class="verdict">'+VLABEL[c.error]+
+        '<span class="tag t-'+c.sev+'">'+c.sev.toUpperCase()+'</span></div>'+
+      '<div class="msg"><b>Recommendation:</b> '+c.msg+'</div>'+
+      '<ul class="steps">'+c.steps.map(s=>'<li>'+s+'</li>').join('')+'</ul>'+
+      '<div class="action">action&nbsp;<b>'+c.action+'</b> &nbsp;&middot;&nbsp; target&nbsp;<b>'+
+        (c.action==='LOG_AND_MONITOR'?'case log':'application')+'</b></div>';
+    feed.appendChild(e); feed.scrollTop=feed.scrollHeight; showToast(c);
+  }
+
+  function step(){
+    if(i>=CASES.length){clearInterval(timer);timer=null;runBtn.disabled=false;runBtn.textContent='Run audit';return;}
+    render(CASES[i],i); i++;
+    // shrink the "after" parity bar as the repair lands
+    const frac=1-(i/CASES.length)*0.60;
+    document.getElementById('afterbar').style.width=(frac*100)+'%';
+    document.getElementById('afterval').textContent=(0.199*frac).toFixed(3);
+    if(i===CASES.length){document.getElementById('redchip').textContent='−60% gap';}
+  }
+  function run(){
+    if(timer)return; feed.innerHTML=''; i=0; runBtn.disabled=true; runBtn.textContent='Auditing…';
+    document.getElementById('redchip').textContent='repairing…';
+    step(); timer=setInterval(step,950);
+  }
+  runBtn.onclick=run;
+  resetBtn.onclick=function(){if(timer){clearInterval(timer);timer=null;} feed.innerHTML='';i=0;
+    runBtn.disabled=false;runBtn.textContent='Run audit';
+    document.getElementById('afterbar').style.width='100%';document.getElementById('afterval').textContent='0.199';
+    document.getElementById('redchip').textContent='ready';};
+
+  // ---- chatbox ----
+  const chatlog=document.getElementById('chatlog'), q=document.getElementById('q'),
+        send=document.getElementById('send');
+  function bubble(t,cls,src){const b=document.createElement('div');b.className='bub '+cls;
+    b.innerHTML=t+(src?'<span class="src">'+src+'</span>':'');chatlog.appendChild(b);chatlog.scrollTop=chatlog.scrollHeight;return b;}
+
+  function localAnswer(text){
+    const m=text.match(/\b(0|9|94|20)\b/); const c=m?CASES.find(x=>x.id===m[1]):null;
+    if(c) return {t:c.msg,src:"local fallback &middot; from the structured certificate"};
+    if(/gap|parity|overall|summary/i.test(text))
+      return {t:"Across the audit the parity gap falls from <b>0.199</b> to <b>0.079</b> (−60%) once the localized channel is neutralized, at an AUC cost of 0.014.",src:"local fallback"};
+    return {t:"Ask about case 0, 9, 20 or 94, or about the overall parity gap.",src:"local fallback"};
+  }
+
+  async function answer(text){
+    const ctx=CASES.map(c=>`case ${c.id} (${c.group}, score effect ${c.eff}): verdict=${c.error}, severity=${c.sev}, action=${c.action}. ${c.msg.replace(/&mdash;/g,'-')}`).join("\n");
+    const prompt=`You are a hiring-compliance assistant. Using ONLY the audit facts below, answer the question in 1-2 clear sentences. Do not invent numbers or names.\n\nAUDIT FACTS:\n${ctx}\n\nThe channel that leaks the protected attribute is the ${CHANNEL}. Overall parity gap falls 0.199 -> 0.079 after repair.\n\nQUESTION: ${text}`;
+    try{
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,
+          messages:[{role:"user",content:prompt}]})});
+      const d=await r.json();
+      const txt=(d.content||[]).map(x=>x.text||"").join(" ").trim();
+      if(txt) return {t:txt,src:"phrased by Claude"};
+      throw new Error("empty");
+    }catch(e){ return localAnswer(text); }
+  }
+
+  async function ask(){
+    const text=q.value.trim(); if(!text)return; q.value='';
+    bubble(text,'me'); const wait=bubble('thinking&hellip;','ai');
+    const a=await answer(text); wait.innerHTML=a.t+'<span class="src">'+a.src+'</span>';
+    chatlog.scrollTop=chatlog.scrollHeight;
+  }
+  send.onclick=ask; q.addEventListener('keydown',e=>{if(e.key==='Enter')ask();});
+
+  // auto-run once on load so the end-to-end story plays immediately
+  setTimeout(run,500);
+})();
+</script>
+</div>

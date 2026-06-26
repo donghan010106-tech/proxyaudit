@@ -1,0 +1,13 @@
+# Core (required). The whole audit + paper figures run on these alone.
+# Preferred install:  pip install -e .   (reads pyproject.toml)
+numpy>=1.24
+pandas>=2.0
+scikit-learn>=1.3
+matplotlib>=3.7
+seaborn>=0.12
+scipy>=1.10
+
+# Optional extras:
+#   pip install -e ".[app]"     -> streamlit (interactive auditor)
+#   pip install -e ".[extras]"  -> shap, xgboost, datasets (real FairJob loader)
+#   pip install -e ".[dev]"     -> pytest, pytest-cov, ruff

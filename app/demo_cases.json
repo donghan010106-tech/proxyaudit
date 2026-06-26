@@ -1,0 +1,64 @@
+[
+  {
+    "case_id": "9",
+    "error_type": "proxy_caused_rejection",
+    "root_channel": "demographic embedding (photo/name)",
+    "timing": "2026-06-18T09:14:00",
+    "severity": "high",
+    "action_code": "REVERSE_AND_REVIEW",
+    "target": "application",
+    "steps": [
+      "Re-score the application with the named channel neutralized.",
+      "Route to human review with the certificate attached.",
+      "Notify the candidate that the decision is being re-assessed."
+    ],
+    "message": "This rejection was caused by the demographic embedding (photo/name): removing only that channel flips the decision, and the candidate clears the bar on competencies alone. Re-evaluate with the channel neutralized, route to human review, and notify the candidate of re-assessment.",
+    "source": "template"
+  },
+  {
+    "case_id": "94",
+    "error_type": "proxy_caused_rejection",
+    "root_channel": "demographic embedding (photo/name)",
+    "timing": "2026-06-18T09:14:01",
+    "severity": "high",
+    "action_code": "REVERSE_AND_REVIEW",
+    "target": "application",
+    "steps": [
+      "Re-score the application with the named channel neutralized.",
+      "Route to human review with the certificate attached.",
+      "Notify the candidate that the decision is being re-assessed."
+    ],
+    "message": "This rejection was caused by the demographic embedding (photo/name): removing only that channel flips the decision, and the candidate clears the bar on competencies alone. Re-evaluate with the channel neutralized, route to human review, and notify the candidate of re-assessment.",
+    "source": "template"
+  },
+  {
+    "case_id": "0",
+    "error_type": "proxy_suppressed_no_flip",
+    "root_channel": "demographic embedding (photo/name)",
+    "timing": "2026-06-18T09:14:02",
+    "severity": "low",
+    "action_code": "LOG_AND_MONITOR",
+    "target": "case_log",
+    "steps": [
+      "Record that the channel suppressed the score without changing the outcome.",
+      "Add to the monitoring set in case the margin shifts."
+    ],
+    "message": "The demographic embedding (photo/name) lowered this score but did not change the outcome; the rest of the profile already determined it. No reversal is required, but log the case and monitor the margin.",
+    "source": "template"
+  },
+  {
+    "case_id": "20",
+    "error_type": "proxy_inflated_selection",
+    "root_channel": "demographic embedding (photo/name)",
+    "timing": "2026-06-18T09:14:03",
+    "severity": "medium",
+    "action_code": "RECHECK_SELECTION",
+    "target": "application",
+    "steps": [
+      "Re-score with the named channel neutralized.",
+      "Confirm the candidate still clears the bar on competencies alone."
+    ],
+    "message": "This selection was inflated by the demographic embedding (photo/name). Re-score with the channel neutralized and confirm the candidate still qualifies on competencies alone before finalizing.",
+    "source": "template"
+  }
+]
