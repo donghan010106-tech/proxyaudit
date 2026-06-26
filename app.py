@@ -54,12 +54,45 @@ def get_anthropic_client():
         return None
 
 
+def _find_mentioned_cases(text: str):
+    """Return all CASES whose id appears as a whole number in the text,
+    in the order the ids appear in the text (not in CASES' fixed order)."""
+    import re
+    ids_by_pos = []
+    for m in re.finditer(r"\b\d+\b", text):
+        cid = m.group(0)
+        if any(c["id"] == cid for c in data.CASES):
+            ids_by_pos.append((m.start(), cid))
+    ids_by_pos.sort(key=lambda x: x[0])
+    seen = []
+    for _, cid in ids_by_pos:
+        if cid not in seen:
+            seen.append(cid)
+    by_id = {c["id"]: c for c in data.CASES}
+    return [by_id[cid] for cid in seen]
+
+
 def local_answer(text: str) -> tuple[str, str]:
     """Template fallback answer, grounded only in the structured case data."""
     text_l = text.lower()
-    for c in data.CASES:
-        if c["id"] in text_l.split() or f"case {c['id']}" in text_l or f"case{c['id']}" in text_l:
-            return c["message"], "local fallback · from the structured certificate"
+    mentioned = _find_mentioned_cases(text_l)
+
+    if len(mentioned) >= 2:
+        a, b = mentioned[0], mentioned[1]
+        parts = [
+            f"Case {a['id']} ({a['group']}): {data.VLABEL[a['error_type']]} "
+            f"(necessity {'✓' if a['necessity'] else '×'}, sufficiency {'✓' if a['sufficiency'] else '×'}) "
+            f"→ {a['verdict']}.",
+            f"Case {b['id']} ({b['group']}): {data.VLABEL[b['error_type']]} "
+            f"(necessity {'✓' if b['necessity'] else '×'}, sufficiency {'✓' if b['sufficiency'] else '×'}) "
+            f"→ {b['verdict']}.",
+        ]
+        return " ".join(parts), "local fallback · comparing structured certificates"
+
+    if len(mentioned) == 1:
+        c = mentioned[0]
+        return c["message"], "local fallback · from the structured certificate"
+
     if any(k in text_l for k in ["gap", "parity", "overall", "summary"]):
         return (
             f"Across the audit the parity gap falls from {data.PARITY_BEFORE:.3f} to "
