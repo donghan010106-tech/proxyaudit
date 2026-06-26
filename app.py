@@ -231,34 +231,14 @@ else:
     frac = 1 - (st.session_state.feed_idx / len(data.CASES)) * 0.60
     gap_now = data.PARITY_BEFORE * frac
 
-    bcol1, bcol2, bcol3 = st.columns([2, 1, 1])
-    with bcol1:
-        st.progress(min(max(frac, 0.0), 1.0), text=f"Group parity gap — before {data.PARITY_BEFORE:.3f}, now {gap_now:.3f}")
-    with bcol2:
-        if st.button("▶ Run audit", use_container_width=True):
-            st.session_state.feed_idx = 0
-            for _ in range(len(data.CASES)):
-                st.session_state.feed_idx += 1
-                time.sleep(0.15)
-                st.rerun()
-    with bcol3:
-        if st.button("Reset", use_container_width=True):
-            st.session_state.feed_idx = 0
-            st.rerun()
-
-    if st.session_state.feed_idx == len(data.CASES) and len(data.CASES) > 0:
-        st.success(f"Repair complete — parity gap reduced ~60% (−{data.PARITY_BEFORE - gap_now:.3f}).")
-
-    st.subheader("Step 5 — recovery recommendations")
     sev_colors = {"high": "#c8442b", "medium": "#2f6db0", "low": "#8a7320"}
     sev_bg = {"high": "#fbeae6", "medium": "#e8f0f9", "low": "#f6f0db"}
 
-    for c in data.CASES[: st.session_state.feed_idx]:
+    def render_case_html(c):
         color = sev_colors[c["severity"]]
         bg = sev_bg[c["severity"]]
         steps_html = "".join(f"<li>{s}</li>" for s in c["steps"])
-        st.markdown(
-            f"""
+        return f"""
 <div style="border:1px solid #e4e8ee;border-left:4px solid {color};border-radius:9px;
 padding:10px 12px;margin:9px 0;background:#fff;">
 <div style="font-size:11.5px;color:#6b7785;font-family:monospace">
@@ -274,12 +254,54 @@ background:{bg};color:{color};margin-left:6px">{c['severity'].upper()}</span>
 <div style="font-size:11px;color:#6b7785;margin-top:6px">action <b>{c['action_code']}</b> ·
 target <b>{'case log' if c['action_code']=='LOG_AND_MONITOR' else 'application'}</b></div>
 </div>
-""",
-            unsafe_allow_html=True,
-        )
+"""
 
-    if st.session_state.feed_idx == 0:
-        st.info("Click **Run audit** to play back the per-decision recommendations.")
+    bcol1, bcol2, bcol3 = st.columns([2, 1, 1])
+    with bcol2:
+        run_clicked = st.button("▶ Run audit", use_container_width=True)
+    with bcol3:
+        if st.button("Reset", use_container_width=True):
+            st.session_state.feed_idx = 0
+            st.rerun()
+
+    progress_box = bcol1.empty()
+    progress_box.progress(
+        min(max(frac, 0.0), 1.0),
+        text=f"Group parity gap — before {data.PARITY_BEFORE:.3f}, now {gap_now:.3f}",
+    )
+
+    st.subheader("Step 5 — recovery recommendations")
+    feed_box = st.container()
+
+    if run_clicked:
+        # Animate within this single script run: progressively reveal each
+        # case and update the progress bar, without calling st.rerun().
+        st.session_state.feed_idx = 0
+        shown_html = ""
+        with feed_box:
+            placeholder = st.empty()
+        for k, c in enumerate(data.CASES, start=1):
+            st.session_state.feed_idx = k
+            shown_html += render_case_html(c)
+            placeholder.markdown(shown_html, unsafe_allow_html=True)
+            new_frac = 1 - (k / len(data.CASES)) * 0.60
+            progress_box.progress(
+                min(max(new_frac, 0.0), 1.0),
+                text=f"Group parity gap — before {data.PARITY_BEFORE:.3f}, "
+                     f"now {data.PARITY_BEFORE * new_frac:.3f}",
+            )
+            time.sleep(0.5)
+        st.success(
+            f"Repair complete — parity gap reduced ~60% "
+            f"(−{data.PARITY_BEFORE - data.PARITY_BEFORE * new_frac:.3f})."
+        )
+    else:
+        with feed_box:
+            if st.session_state.feed_idx == 0:
+                st.info("Click **Run audit** to play back the per-decision recommendations.")
+            else:
+                shown_html = "".join(render_case_html(c) for c in data.CASES[: st.session_state.feed_idx])
+                st.markdown(shown_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Ask the auditor")
